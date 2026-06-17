@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雅思学习闹钟 · Day 1</title>
+<style>
+  :root {
+    --bg: #1a1a2e; --card: #16213e; --accent: #0f3460;
+    --gold: #e2b04a; --green: #4ecca3; --red: #e74c3c;
+    --text: #eee; --text2: #aaa; --active: #533483;
+    --orange: #f39c12;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family: 'PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height:100vh; display:flex; justify-content:center;
+    padding: 20px;
+  }
+  .container{max-width: 560px; width: 100%;}
+
+  /* ── 头部 ── */
+  .header{
+    text-align: center; padding: 28px 0 20px;
+  }
+  .header .day-badge{
+    display: inline-block; background: var(--accent);
+    padding: 6px 20px; border-radius: 20px;
+    font-size: 13px; letter-spacing: 2px; color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .header h1{font-size: 26px; letter-spacing: 3px; font-weight: 700;}
+  .header .sub{font-size: 13px; color: var(--text2); margin-top: 4px;}
+
+  /* ── 连续天数 + 评级 ── */
+  .streak-panel{
+    display:flex; gap:10px; margin: 8px 0 16px;
+  }
+  .streak-card{
+    flex:1; background: var(--card); border-radius: 14px;
+    padding: 14px 16px; text-align: center;
+  }
+  .streak-card .s-icon{font-size: 28px; margin-bottom: 4px;}
+  .streak-card .s-num{font-size: 28px; font-weight: 700; letter-spacing: 2px;}
+  .streak-card .s-label{font-size: 11px; color: var(--text2); margin-top: 2px;}
+  .streak-card.fire{border: 2px solid var(--orange);}
+  .streak-card.rating-card{border: 2px solid var(--green);}
+  .streak-card.penalty{border: 2px solid var(--red); opacity: .7;}
+
+  /* ── 奖励/惩罚横幅 ── */
+  .banner{
+    border-radius: 12px; padding: 14px 18px; margin: 0 0 14px;
+    font-size: 14px; font-weight: 600; letter-spacing: 1px;
+    display:none; animation: pop .3s ease;
+  }
+  .banner.show{display:block}
+  .banner.reward{background: linear-gradient(135deg,#1a3a2a,#0f3460); border:1px solid var(--green); color: var(--green);}
+  .banner.penalty-banner{background: linear-gradient(135deg,#3a1a1a,#0f3460); border:1px solid var(--red); color: var(--red);}
+
+  /* ── 打卡面板 ── */
+  .checkin-panel{
+    background: var(--card); border-radius: 16px; padding: 18px 16px;
+    margin: 12px 0;
+  }
+  .checkin-panel .ci-title{
+    font-size: 13px; letter-spacing: 2px; color: var(--text2);
+    margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .checkin-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .ci-item{
+    display:flex; align-items:center; gap: 8px;
+    padding: 8px 10px; border-radius: 10px;
+    cursor:pointer; transition: all .2s;
+    background: rgba(255,255,255,.04); font-size: 12px;
+    user-select: none;
+  }
+  .ci-item:hover{background: rgba(255,255,255,.08);}
+  .ci-item.done{opacity:.4; text-decoration: line-through;}
+  .ci-item .ci-box{
+    width:20px; height:20px; border-radius: 6px;
+    border: 2px solid var(--text2); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 12px; transition: all .2s;
+  }
+  .ci-item.done .ci-box{
+    background: var(--green); border-color: var(--green); color:#000;
+  }
+  .ci-item .ci-icon{font-size: 16px; flex-shrink:0;}
+  .ci-item .ci-name{flex:1; letter-spacing: 1px;}
+
+  /* ── 历史记录 ── */
+  .history-panel{
+    background: var(--card); border-radius: 16px; padding: 18px 16px;
+    margin: 12px 0; display:none;
+  }
+  .history-panel.open{display:block}
+  .history-panel .h-title{
+    font-size: 13px; letter-spacing: 2px; color: var(--text2);
+    margin-bottom: 10px; cursor:pointer;
+  }
+  .history-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 6px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .history-row .h-rating{font-size: 16px;}
+
+  /* ── 大时钟 ── */
+  .clock-wrap{
+    text-align: center; padding: 20px 0;
+  }
+  .clock{
+    font-size: 72px; font-weight: 200; letter-spacing: 4px;
+    font-family: 'SF Mono','Consolas','Courier New',monospace;
+    color: var(--green);
+  }
+  .clock .sec{font-size: 36px; color: var(--text2);}
+  .date-today{font-size: 13px; color: var(--text2); margin-top: 4px; letter-spacing: 1px;}
+
+  /* ── 当前任务卡片 ── */
+  .now-card{
+    background: linear-gradient(135deg, var(--active), #2d1b69);
+    border-radius: 16px; padding: 20px 24px; margin: 12px 0;
+    position: relative; overflow: hidden;
+  }
+  .now-card::after{
+    content:''; position:absolute; top:-30px;right:-30px;
+    width:100px;height:100px; border:1px solid rgba(255,255,255,.1);
+    border-radius:50%;
+  }
+  .now-card .now-label{
+    font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,.5);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .now-card .now-task{
+    font-size: 22px; font-weight: 700; letter-spacing: 2px;
+    position: relative; z-index: 1;
+  }
+  .now-card .now-time{
+    font-size: 13px; color: rgba(255,255,255,.6);
+    margin-top: 4px; position: relative; z-index: 1;
+  }
+  .now-card .countdown{
+    margin-top: 10px; font-size: 36px; font-weight: 300;
+    font-family: 'SF Mono','Consolas',monospace;
+    color: var(--gold); position: relative; z-index: 1;
+  }
+
+  /* ── 进度条 ── */
+  .progress-wrap{margin: 16px 0}
+  .progress-wrap .labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px}
+  .progress-bar{height:6px;background:var(--accent);border-radius:3px;overflow:hidden}
+  .progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s}
+
+  /* ── 任务列表 ── */
+  .task-list{}
+  .task{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 16px; margin:4px 0;
+    border-radius:12px; cursor:default;
+    transition:all .3s; position:relative;
+    background: var(--card);
+  }
+  .task.done{opacity:.4}
+  .task.current{
+    background: var(--active);
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  .task .t-time{
+    font-size:12px; color:var(--text2); min-width:85px;
+    font-family:'SF Mono','Consolas',monospace; letter-spacing:1px;
+  }
+  .task .t-icon{font-size:22px; min-width:32px; text-align:center}
+  .task .t-info{flex:1}
+  .task .t-info .t-name{font-size:14px; font-weight:600; letter-spacing:1px}
+  .task .t-info .t-detail{font-size:11px; color:var(--text2); margin-top:2px}
+  .task .t-status{
+    font-size:11px; padding:3px 10px; border-radius:10px;
+    background: rgba(255,255,255,.1); white-space:nowrap;
+  }
+  .task.current .t-status{background:var(--green); color:#000; font-weight:600}
+
+  /* ── 控制按钮 ── */
+  .controls{display:flex;gap:10px;margin:16px 0}
+  .btn{
+    flex:1; padding:14px; border:none; border-radius:12px;
+    font-size:14px; font-weight:600; letter-spacing:2px;
+    cursor:pointer; transition:all .15s; font-family:inherit;
+  }
+  .btn:active{transform:scale(.96)}
+  .btn-start{background:var(--green); color:#000}
+  .btn-pause{background:var(--gold); color:#000}
+  .btn-reset{background:var(--accent); color:var(--text)}
+  .btn-test{background:transparent; border:1px solid var(--text2); color:var(--text2)}
+
+  /* ── 弹窗 ── */
+  .alarm-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.8);
+    display:none; justify-content:center; align-items:center; z-index:100;
+  }
+  .alarm-overlay.show{display:flex}
+  .alarm-box{
+    background:var(--card); border-radius:20px; padding:32px 28px;
+    text-align:center; max-width:340px; width:90%;
+    border:2px solid var(--gold);
+    animation: pop .3s ease;
+  }
+  @keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+  .alarm-box .alarm-icon{font-size:56px; margin-bottom:12px}
+  .alarm-box .alarm-msg{font-size:20px; font-weight:700; letter-spacing:2px; margin-bottom:8px}
+  .alarm-box .alarm-next{font-size:13px; color:var(--text2); margin-bottom:20px}
+  .alarm-box .btn-dismiss{
+    padding:12px 40px; background:var(--gold); color:#000;
+    border:none; border-radius:10px; font-size:15px; font-weight:600;
+    letter-spacing:2px; cursor:pointer; font-family:inherit;
+  }
+  .alarm-box .btn-dismiss:active{opacity:.8}
+
+  /* ── 奖励弹窗 ── */
+  .reward-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.85);
+    display:none; justify-content:center; align-items:center; z-index:101;
+  }
+  .reward-overlay.show{display:flex}
+  .reward-box{
+    background:linear-gradient(135deg,#1a2a1a,#16213e);
+    border-radius:20px; padding:32px 28px; text-align:center;
+    max-width:360px; width:90%;
+    border:2px solid var(--gold);
+    animation: pop .3s ease;
+  }
+  .reward-box .r-icon{font-size: 64px; margin-bottom: 8px;}
+  .reward-box .r-title{font-size: 22px; font-weight: 700; letter-spacing: 2px; color: var(--gold); margin-bottom: 6px;}
+  .reward-box .r-desc{font-size: 14px; color: var(--text); margin-bottom: 6px; line-height: 1.6;}
+  .reward-box .r-note{font-size: 12px; color: var(--text2); margin-bottom: 18px;}
+  .reward-box .btn-claim{
+    padding:12px 40px; background:var(--green); color:#000;
+    border:none; border-radius:10px; font-size:15px; font-weight:600;
+    letter-spacing:2px; cursor:pointer; font-family:inherit;
+  }
+  .reward-box .btn-claim:active{opacity:.8}
+
+  /* ── 底部工具栏 ── */
+  .toolbar{
+    display:flex; gap:10px; margin: 8px 0;
+  }
+  .btn-sm{
+    padding:10px 16px; border:none; border-radius:10px;
+    font-size:12px; font-weight:600; letter-spacing:1px;
+    cursor:pointer; font-family:inherit;
+    background:var(--accent); color:var(--text2);
+    transition:all .15s;
+  }
+  .btn-sm:active{transform:scale(.96)}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="day-badge" id="dayBadge">DAY 1 · 第一阶段</div>
+    <h1>雅思学习闹钟</h1>
+    <div class="sub">75 天冲刺 6.0 · 补基础阶段</div>
+  </div>
+
+  <!-- 连续天数 + 评级 -->
+  <div class="streak-panel">
+    <div class="streak-card fire" id="streakCard">
+      <div class="s-icon">🔥</div>
+      <div class="s-num" id="streakNum">0</div>
+      <div class="s-label">连续达标</div>
+    </div>
+    <div class="streak-card rating-card" id="ratingCard">
+      <div class="s-icon" id="ratingIcon">—</div>
+      <div class="s-num" id="ratingLabel">未评</div>
+      <div class="s-label">今日评级</div>
+    </div>
+    <div class="streak-card penalty" id="penaltyCard" style="display:none;">
+      <div class="s-icon">🚫</div>
+      <div class="s-num" style="font-size:16px;">罚</div>
+      <div class="s-label">明天禁新词</div>
+    </div>
+  </div>
+
+  <!-- 奖励/惩罚横幅 -->
+  <div class="banner reward" id="rewardBanner"></div>
+  <div class="banner penalty-banner" id="penaltyBanner"></div>
+
+  <div class="clock-wrap">
+    <div class="clock" id="clock">--:--<span class="sec">:--</span></div>
+    <div class="date-today" id="dateToday"></div>
+  </div>
+
+  <div class="now-card" id="nowCard">
+    <div class="now-label">▶ 当前任务</div>
+    <div class="now-task" id="nowTask">——</div>
+    <div class="now-time" id="nowTime"></div>
+    <div class="countdown" id="countdown"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="labels"><span>闹钟进度</span><span id="progressLabel">0/21</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- ★ 打卡面板 ★ -->
+  <div class="checkin-panel" id="checkinPanel">
+    <div class="ci-title">
+      <span>📋 今日打卡 <span style="color:var(--text2);font-size:11px;">（点击勾选完成）</span></span>
+      <span style="font-size:12px;" id="checkinScore">0/14</span>
+    </div>
+    <div class="checkin-grid" id="checkinGrid"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" onclick="startDay()">▶ 开始</button>
+    <button class="btn btn-pause" onclick="pauseDay()">⏸ 暂停</button>
+    <button class="btn btn-reset" onclick="resetDay()">↺ 重置</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn-sm" onclick="testAlarm()">🔔 测试闹钟</button>
+    <button class="btn-sm" onclick="toggleHistory()">📅 历史</button>
+    <button class="btn-sm" onclick="manualRate()">🏅 手动结算</button>
+  </div>
+
+  <!-- 历史面板 -->
+  <div class="history-panel" id="historyPanel">
+    <div class="h-title" onclick="toggleHistory()">📅 打卡历史 ▼</div>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="task-list" id="taskList"></div>
+
+</div>
+
+<!-- 闹钟弹窗 -->
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-box">
+    <div class="alarm-icon">⏰</div>
+    <div class="alarm-msg" id="alarmMsg">时间到！</div>
+    <div class="alarm-next" id="alarmNext"></div>
+    <button class="btn-dismiss" onclick="dismissAlarm()">知道了，继续下一个 →</button>
+  </div>
+</div>
+
+<!-- 奖励弹窗 -->
+<div class="reward-overlay" id="rewardOverlay">
+  <div class="reward-box">
+    <div class="r-icon" id="rewardIcon">🏆</div>
+    <div class="r-title" id="rewardTitle">里程碑！</div>
+    <div class="r-desc" id="rewardDesc"></div>
+    <div class="r-note" id="rewardNote"></div>
+    <button class="btn-claim" onclick="claimReward()">收下！🎉</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// 日程数据
+// ═══════════════════════════════════════
+const SCHEDULE = [
+  {start:'08:30',end:'08:50',icon:'🎧',name:'晨读',detail:'新概念课文朗读 3 遍，出声'},
+  {start:'08:50',end:'09:40',icon:'📝',name:'听力词',detail:'冲鸭 50 新词：听音→反应→拼写→错词抄三遍'},
+  {start:'09:40',end:'09:50',icon:'☕',name:'休息',detail:'站起来走动'},
+  {start:'09:50',end:'10:50',icon:'📖',name:'语法课',detail:'B站「英语的平行世界」2-3集 + 笔记'},
+  {start:'10:50',end:'11:00',icon:'☕',name:'休息',detail:''},
+  {start:'11:00',end:'12:00',icon:'📖',name:'阅读词',detail:'真经 80 新词：遮中文→看英文→3秒想不出画⭕'},
+  {start:'12:00',end:'12:30',icon:'🔄',name:'阅读词复习',detail:'翻昨天+前天的错词本'},
+  {start:'12:30',end:'13:30',icon:'🍚',name:'午饭休息',detail:'不碰英语'},
+  {start:'13:30',end:'14:20',icon:'🎧',name:'慢速听力',detail:'VOA Level 1：裸听→看文本→裸听检验'},
+  {start:'14:20',end:'14:30',icon:'☕',name:'休息',detail:''},
+  {start:'14:30',end:'15:20',icon:'📖',name:'分级阅读',detail:'News in Levels Level 2：读→查生词→复述'},
+  {start:'15:20',end:'15:30',icon:'☕',name:'休息',detail:''},
+  {start:'15:30',end:'16:20',icon:'✏️',name:'语法练习',detail:'用语法点造句 15 个，写对为止'},
+  {start:'16:20',end:'16:50',icon:'🔄',name:'听力词复习',detail:'冲鸭昨天+前天错词，重新听写'},
+  {start:'16:50',end:'17:00',icon:'☕',name:'休息',detail:''},
+  {start:'17:00',end:'17:30',icon:'📺',name:'新概念动画',detail:'1集三遍：看字幕→关字幕→跟读'},
+  {start:'17:30',end:'18:30',icon:'🍚',name:'晚饭休息',detail:'不碰英语'},
+  {start:'18:30',end:'19:20',icon:'🗣️',name:'口语基础',detail:'跟读VOA + 英语自言自语'},
+  {start:'19:20',end:'19:30',icon:'☕',name:'休息',detail:''},
+  {start:'19:30',end:'20:10',icon:'✏️',name:'造句输出',detail:'20个核心词各写一个句子'},
+  {start:'20:10',end:'20:40',icon:'🔄',name:'全天复习',detail:'翻笔记+错词本+语法笔记'},
+  {start:'20:40',end:'21:00',icon:'📋',name:'明日预览',detail:'翻明天新概念课文，圈生词'},
+];
+
+// 打卡任务（非休息非吃饭的 14 个学习任务）
+const CHECKIN_ITEMS = [
+  {id:'morning_read', icon:'🎧', name:'晨读', scheduleIdx:0},
+  {id:'listen_vocab', icon:'📝', name:'听力词', scheduleIdx:1},
+  {id:'grammar', icon:'📖', name:'语法课', scheduleIdx:3},
+  {id:'read_vocab', icon:'📖', name:'阅读词', scheduleIdx:5},
+  {id:'read_review', icon:'🔄', name:'阅读词复习', scheduleIdx:6},
+  {id:'slow_listen', icon:'🎧', name:'慢速听力', scheduleIdx:8},
+  {id:'level_read', icon:'📖', name:'分级阅读', scheduleIdx:10},
+  {id:'grammar_ex', icon:'✏️', name:'语法练习', scheduleIdx:12},
+  {id:'listen_review', icon:'🔄', name:'听力词复习', scheduleIdx:13},
+  {id:'concept', icon:'📺', name:'新概念动画', scheduleIdx:15},
+  {id:'speaking', icon:'🗣️', name:'口语基础', scheduleIdx:17},
+  {id:'sentence', icon:'✏️', name:'造句输出', scheduleIdx:19},
+  {id:'review_all', icon:'🔄', name:'全天复习', scheduleIdx:20},
+  {id:'preview', icon:'📋', name:'明日预览', scheduleIdx:21},
+];
+
+// ═══════════════════════════════════════
+// 持久化 (localStorage)
+// ═══════════════════════════════════════
+const LS_KEY = 'ielts_alarm_data';
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {
+    streak: 0,           // 连续达标天数
+    lastDate: '',        // 上次打卡日期
+    history: [],         // [{date, rating, doneCount, totalCount}]
+    penalty: false,      // 今天是否惩罚日
+    todayChecked: {},    // {taskId: true}
+    phase: 1,            // 当前阶段
+    dayInPhase: 1,       // 阶段内第几天
+  };
+}
+
+function saveData(d){
+  localStorage.setItem(LS_KEY, JSON.stringify(d));
+}
+
+let DATA = loadData();
+
+// ═══════════════════════════════════════
+// 日期工具
+// ═══════════════════════════════════════
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ═══════════════════════════════════════
+// 打卡面板渲染
+// ═══════════════════════════════════════
+function renderCheckin(){
+  const grid = document.getElementById('checkinGrid');
+  const today = todayStr();
+
+  // 新的一天，重置打卡
+  if(DATA.lastDate !== today){
+    DATA.todayChecked = {};
+    DATA.lastDate = today;
+    saveData(DATA);
+  }
+
+  grid.innerHTML = CHECKIN_ITEMS.map(item => {
+    const done = DATA.todayChecked[item.id];
+    return `<div class="ci-item ${done?'done':''}" onclick="toggleCheck('${item.id}')">
+      <div class="ci-box">${done?'✓':''}</div>
+      <span class="ci-icon">${item.icon}</span>
+      <span class="ci-name">${item.name}</span>
+    </div>`;
+  }).join('');
+
+  updateCheckinScore();
+}
+
+function toggleCheck(id){
+  const today = todayStr();
+  if(DATA.lastDate !== today){
+    DATA.todayChecked = {};
+    DATA.lastDate = today;
+  }
+  DATA.todayChecked[id] = !DATA.todayChecked[id];
+  saveData(DATA);
+  renderCheckin();
+  updateRating();
+}
+
+function updateCheckinScore(){
+  const done = Object.values(DATA.todayChecked).filter(Boolean).length;
+  document.getElementById('checkinScore').textContent = done+'/'+CHECKIN_ITEMS.length;
+}
+
+// ═══════════════════════════════════════
+// 评级系统
+// ═══════════════════════════════════════
+function calcRating(){
+  const done = Object.values(DATA.todayChecked).filter(Boolean).length;
+  const total = CHECKIN_ITEMS.length; // 14
+  if(done >= 13) return {icon:'✅',label:'全勤',level:'perfect'};
+  if(done >= 10) return {icon:'🔷',label:'合格',level:'good'};
+  if(done >= 7)  return {icon:'🔸',label:'勉强',level:'ok'};
+  return {icon:'❌',label:'摆烂',level:'bad'};
+}
+
+function updateRating(){
+  const r = calcRating();
+  document.getElementById('ratingIcon').textContent = r.icon;
+  document.getElementById('ratingLabel').textContent = r.label;
+
+  const card = document.getElementById('ratingCard');
+  card.style.borderColor = r.level==='perfect'?'var(--gold)':r.level==='good'?'var(--green)':r.level==='ok'?'var(--orange)':'var(--red)';
+
+  // 惩罚日提示
+  const penaltyCard = document.getElementById('penaltyCard');
+  penaltyCard.style.display = DATA.penalty ? '' : 'none';
+
+  // 奖励横幅
+  updateBanners(r);
+}
+
+function updateBanners(r){
+  const rewardBanner = document.getElementById('rewardBanner');
+  const penaltyBanner = document.getElementById('penaltyBanner');
+
+  rewardBanner.classList.remove('show');
+  penaltyBanner.classList.remove('show');
+
+  // 惩罚日
+  if(DATA.penalty){
+    penaltyBanner.textContent = '🚫 今天是惩罚日：不学新词，只复习旧词 + 补昨天任务';
+    penaltyBanner.classList.add('show');
+  }
+
+  // 连续奖励提醒
+  if(DATA.streak === 2 && (r.level==='good'||r.level==='perfect')){
+    rewardBanner.textContent = '🔥 再达标 1 天，解锁"放宽休息"特权（每段多休 10 分钟）';
+    rewardBanner.classList.add('show');
+  }
+}
+
+// ═══════════════════════════════════════
+// 手动结算（当天结束时调用）
+// ═══════════════════════════════════════
+function manualRate(){
+  const r = calcRating();
+  const today = todayStr();
+
+  // 检查是否已经结算过
+  const already = DATA.history.find(h => h.date === today);
+  if(already){
+    alert('今天已结算过了：'+already.rating+'（'+already.doneCount+'/'+already.totalCount+'）');
+    return;
+  }
+
+  const done = Object.values(DATA.todayChecked).filter(Boolean).length;
+
+  // 写入历史
+  DATA.history.push({
+    date: today,
+    rating: r.icon+r.label,
+    doneCount: done,
+    totalCount: CHECKIN_ITEMS.length,
+  });
+
+  // 更新连续天数
+  if(r.level === 'good' || r.level === 'perfect'){
+    DATA.streak++;
+    DATA.penalty = false;
+
+    // 检查里程碑
+    if(DATA.streak === 3) showReward('3天连续达标','解锁「放宽休息」：每学习段多休 10 分钟','今天生效！','☕');
+    else if(DATA.streak === 7) showReward('7天连续达标','解锁「轻量日」：明天只背词+听力，不做新课','明天生效！','🎁');
+    else if(DATA.streak === 14) showReward('14天连续达标','解锁「电影之夜」：今晚看一部英文电影，不准开字幕','今晚就安排！','🎬');
+    else if(DATA.streak === 28) showReward('28天 · Phase 1 全勤','🏅 吃顿好的！你说了算。','你值得。','🍖');
+  } else if(r.level === 'bad'){
+    DATA.streak = 0;
+    DATA.penalty = true;
+
+    // 连续摆烂检测
+    const recentBad = DATA.history.filter(h => h.rating.includes('❌')).length;
+    const consecutiveBad = checkConsecutiveBad();
+
+    if(consecutiveBad >= 3){
+      showPenalty('连续 3 天摆烂','你需要停下来想清楚——到底是时间不够，还是方法不对？来找我聊聊。');
+    } else if(consecutiveBad >= 2){
+      showPenalty('连续 2 天摆烂','明天停新课，全部时间补旧债。补完才能往前。');
+    } else {
+      showPenalty('今日摆烂','明天不学新词，只复习旧词 + 补今天落下的。');
+    }
+  } else {
+    // 勉强 - 不断连续，也不加
+    DATA.penalty = false;
+  }
+
+  saveData(DATA);
+  updateUI();
+  renderHistory();
+}
+
+function checkConsecutiveBad(){
+  let count = 0;
+  const reversed = [...DATA.history].reverse();
+  for(const h of reversed){
+    if(h.rating.includes('❌')) count++;
+    else break;
+  }
+  if(calcRating().level === 'bad') count++; // 今天也算
+  return count;
+}
+
+// ═══════════════════════════════════════
+// 弹窗
+// ═══════════════════════════════════════
+function showReward(title, desc, note, icon){
+  document.getElementById('rewardIcon').textContent = icon;
+  document.getElementById('rewardTitle').textContent = title;
+  document.getElementById('rewardDesc').textContent = desc;
+  document.getElementById('rewardNote').textContent = note;
+  document.getElementById('rewardOverlay').classList.add('show');
+}
+
+function showPenalty(title, msg){
+  document.getElementById('rewardIcon').textContent = '⚠️';
+  document.getElementById('rewardTitle').textContent = title;
+  document.getElementById('rewardDesc').textContent = msg;
+  document.getElementById('rewardNote').textContent = '';
+  document.getElementById('rewardOverlay').classList.add('show');
+}
+
+function claimReward(){
+  document.getElementById('rewardOverlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// 历史面板
+// ═══════════════════════════════════════
+function toggleHistory(){
+  const panel = document.getElementById('historyPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) renderHistory();
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(DATA.history.length === 0){
+    list.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:8px 0;">暂无记录，每天学习结束后点「手动结算」</div>';
+    return;
+  }
+  const recent = [...DATA.history].reverse().slice(0, 14); // 最近 14 天
+  list.innerHTML = recent.map(h => `<div class="history-row">
+    <span>${h.date}</span>
+    <span style="color:var(--text2);">${h.doneCount}/${h.totalCount} 项</span>
+    <span class="h-rating">${h.rating}</span>
+  </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// 更新 UI
+// ═══════════════════════════════════════
+function updateUI(){
+  document.getElementById('streakNum').textContent = DATA.streak;
+  updateRating();
+  updateCheckinScore();
+  updateDayBadge();
+}
+
+function updateDayBadge(){
+  const today = todayStr();
+  // 计算阶段内天数
+  const startDate = '2026-06-03'; // Phase 1 开始
+  const diff = Math.floor((new Date(today) - new Date(startDate)) / (1000*60*60*24)) + 1;
+  if(diff > 0 && diff <= 28){
+    document.getElementById('dayBadge').textContent = 'DAY '+diff+' · 第一阶段';
+  } else if(diff > 28 && diff <= 56){
+    document.getElementById('dayBadge').textContent = 'DAY '+diff+' · 第二阶段';
+  } else if(diff > 56){
+    document.getElementById('dayBadge').textContent = 'DAY '+diff+' · 第三阶段';
+  }
+  DATA.dayInPhase = Math.min(diff, 75);
+  saveData(DATA);
+}
+
+// ═══════════════════════════════════════
+// 闹钟主逻辑（保留原功能）
+// ═══════════════════════════════════════
+let currentIdx = -1;
+let running = false;
+let countdownInterval = null;
+let clockInterval = null;
+let alarmAudio = null;
+
+function getAlarmAudio(){
+  if(!alarmAudio){
+    alarmAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+AgH9/f3+Af39/gIB/f39/gH9/f4CAf39/f4B/f3+Ag');
+    alarmAudio.loop = true;
+  }
+  return alarmAudio;
+}
+
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').innerHTML =
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') +
+    '<span class="sec">:' + String(now.getSeconds()).padStart(2,'0') + '</span>';
+  document.getElementById('dateToday').textContent =
+    now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 · 星期'+'日一二三四五六'[now.getDay()];
+}
+clockInterval = setInterval(updateClock, 1000);
+updateClock();
+
+function timeToMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+
+function getCurrentIdx(){
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  for(let i=SCHEDULE.length-1;i>=0;i--){
+    if(nowMin >= timeToMin(SCHEDULE[i].start)) return i;
+  }
+  return -1;
+}
+
+function renderTasks(){
+  const list = document.getElementById('taskList');
+  list.innerHTML = SCHEDULE.map((t,i)=>{
+    let cls = '';
+    if(i===currentIdx) cls='current';
+    else if(running && i<currentIdx) cls='done';
+    let status = '';
+    if(i===currentIdx) status='← 进行中';
+    else if(running && i<currentIdx) status='✓ 完成';
+    return `<div class="task ${cls}">
+      <span class="t-time">${t.start}-${t.end}</span>
+      <span class="t-icon">${t.icon}</span>
+      <span class="t-info"><div class="t-name">${t.name}</div><div class="t-detail">${t.detail||''}</div></span>
+      <span class="t-status">${status}</span>
+    </div>`;
+  }).join('');
+}
+
+function updateNowCard(){
+  if(currentIdx<0 || currentIdx>=SCHEDULE.length){
+    document.getElementById('nowTask').textContent = '等待开始';
+    document.getElementById('nowTime').textContent = '点击「开始」启动今日学习';
+    document.getElementById('countdown').textContent = '';
+    return;
+  }
+  const t = SCHEDULE[currentIdx];
+  document.getElementById('nowTask').textContent = t.icon+' '+t.name;
+  document.getElementById('nowTime').textContent = t.start + ' — ' + t.end;
+  updateCountdown();
+}
+
+function updateCountdown(){
+  if(currentIdx<0) return;
+  const t = SCHEDULE[currentIdx];
+  const now = new Date();
+  const endMin = timeToMin(t.end);
+  const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const left = endMin - nowMin;
+  if(left<=0){
+    document.getElementById('countdown').textContent = '00:00';
+    return;
+  }
+  const m = Math.floor(left);
+  const s = Math.floor((left-m)*60);
+  document.getElementById('countdown').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function updateProgress(){
+  if(currentIdx<0){ document.getElementById('progressFill').style.width='0%'; document.getElementById('progressLabel').textContent='0/'+SCHEDULE.length; return; }
+  const pct = Math.round((currentIdx+1)/SCHEDULE.length*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = (currentIdx+1)+'/'+SCHEDULE.length;
+}
+
+function beepAlarm(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    function beep(start,freq,dur,vol){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='square';o.frequency.value=freq;
+      g.gain.setValueAtTime(vol,start);
+      g.gain.exponentialRampToValueAtTime(0.001,start+dur);
+      o.start(start);o.stop(start+dur);
+    }
+    for(let i=0;i<3;i++){beep(t+i*0.3,880,0.2,0.3)}
+    for(let i=0;i<3;i++){beep(t+1.3+i*0.3,660,0.2,0.3)}
+  }catch(e){}
+}
+
+function dismissAlarm(){
+  document.getElementById('alarmOverlay').classList.remove('show');
+  try{ alarmAudio&&alarmAudio.pause(); alarmAudio&&(alarmAudio.currentTime=0); }catch(e){}
+  advanceTask();
+}
+
+function testAlarm(){
+  document.getElementById('alarmMsg').textContent = '🔔 闹钟测试';
+  document.getElementById('alarmNext').textContent = '一切正常，闹钟会按时响起';
+  document.getElementById('alarmOverlay').classList.add('show');
+  beepAlarm();
+  setTimeout(dismissAlarm, 5000);
+}
+
+function advanceTask(){
+  currentIdx++;
+  if(currentIdx >= SCHEDULE.length){
+    currentIdx = SCHEDULE.length - 1;
+    running = false;
+    document.getElementById('nowTask').textContent = '🎉 今日完成！';
+    document.getElementById('nowTime').textContent = '所有任务结束 — 记得去点「手动结算」';
+    document.getElementById('countdown').textContent = '';
+  }
+  updateNowCard();
+  updateProgress();
+  renderTasks();
+}
+
+let checkInterval = null;
+function startDay(){
+  if(running) return;
+  running = true;
+  currentIdx = getCurrentIdx();
+  if(currentIdx<0) currentIdx = 0;
+  updateNowCard();
+  updateProgress();
+  renderTasks();
+
+  checkInterval = setInterval(()=>{
+    if(!running) return;
+    updateClock();
+    updateCountdown();
+
+    if(currentIdx>=0 && currentIdx<SCHEDULE.length){
+      const now = new Date();
+      const endMin = timeToMin(SCHEDULE[currentIdx].end);
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      if(nowMin >= endMin && currentIdx < SCHEDULE.length-1){
+        beepAlarm();
+        document.getElementById('alarmOverlay').classList.add('show');
+        document.getElementById('alarmMsg').textContent = '「'+SCHEDULE[currentIdx].name+'」结束！';
+        const nxt = SCHEDULE[currentIdx+1];
+        document.getElementById('alarmNext').textContent = '下一个：'+nxt.icon+' '+nxt.name+'（'+nxt.start+'—'+nxt.end+'）';
+      }
+    }
+  }, 5000);
+
+  const now = new Date();
+  const endMin = currentIdx>=0 ? timeToMin(SCHEDULE[currentIdx].end) : 0;
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  if(currentIdx>=0 && nowMin >= endMin) advanceTask();
+}
+
+function pauseDay(){
+  running = false;
+  if(checkInterval){ clearInterval(checkInterval); checkInterval=null; }
+  document.getElementById('nowTask').textContent = '⏸ 已暂停';
+  document.getElementById('countdown').textContent = '';
+  renderTasks();
+}
+
+function resetDay(){
+  running = false;
+  if(checkInterval){ clearInterval(checkInterval); checkInterval=null; }
+  currentIdx = -1;
+  updateNowCard();
+  updateProgress();
+  renderTasks();
+  document.getElementById('alarmOverlay').classList.remove('show');
+  try{ alarmAudio&&alarmAudio.pause(); alarmAudio&&(alarmAudio.currentTime=0); }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// 初始化
+// ═══════════════════════════════════════
+renderTasks();
+renderCheckin();
+updateUI();
+renderHistory();
+</script>
+</body>
+</html>

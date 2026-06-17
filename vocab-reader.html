@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词汇阅读生成器 · 雅思备考</title>
+<style>
+  :root {
+    --bg: #fdf8f0;
+    --card: #fffef9;
+    --border: #e8dcc8;
+    --text: #3d3226;
+    --text-light: #8b7b65;
+    --accent: #b8753e;
+    --accent2: #5a8a6a;
+    --tag-bg: #f0e6d8;
+    --tag-border: #d4c4a8;
+    --danger: #c0392b;
+    --shadow: 0 2px 12px rgba(60, 40, 20, 0.08);
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', 'Noto Serif SC', 'STSong', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(184, 117, 62, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(90, 138, 106, 0.04) 0%, transparent 50%);
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 32px 0 20px;
+  }
+  .header .icon {
+    font-size: 48px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: normal;
+    letter-spacing: 2px;
+    margin: 8px 0 4px;
+    color: var(--text);
+  }
+  .header .sub {
+    font-size: 13px;
+    color: var(--text-light);
+    letter-spacing: 1px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.3s;
+  }
+  .card:hover { box-shadow: 0 4px 20px rgba(60, 40, 20, 0.12); }
+  .card-title {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  /* Input area */
+  .input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .input-row input {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    outline: none;
+  }
+  .input-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(184, 117, 62, 0.1);
+  }
+  .input-row input::placeholder {
+    color: #c4b8a5;
+    font-style: italic;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.25s;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #a06430; box-shadow: 0 2px 8px rgba(184, 117, 62, 0.3); }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-outline:hover { background: rgba(184, 117, 62, 0.06); }
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .btn-danger-text {
+    background: none;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .btn-danger-text:hover { opacity: 1; }
+
+  /* Word tags */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+    align-items: center;
+  }
+  .tag-list.empty::after {
+    content: '还没有添加单词，在上面输入框打字后按回车或点添加';
+    color: #c4b8a5;
+    font-style: italic;
+    font-size: 14px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    border-radius: 20px;
+    font-size: 15px;
+    animation: tagIn 0.3s ease-out;
+  }
+  @keyframes tagIn {
+    from { opacity: 0; transform: scale(0.8) translateY(-8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .tag .remove {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: #d4c4a8;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .tag .remove:hover { background: var(--danger); }
+
+  /* Theme selector */
+  .theme-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .theme-chip {
+    padding: 8px 16px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.25s;
+    background: var(--card);
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+  }
+  .theme-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-chip.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* Level selector */
+  .level-options {
+    display: flex;
+    gap: 8px;
+  }
+  .level-chip {
+    padding: 8px 20px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.25s;
+    background: var(--card);
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+  }
+  .level-chip:hover { border-color: var(--accent2); color: var(--accent2); }
+  .level-chip.active {
+    background: var(--accent2);
+    color: #fff;
+    border-color: var(--accent2);
+  }
+
+  /* Generated passage */
+  .passage-container {
+    position: relative;
+    min-height: 120px;
+    transition: all 0.3s;
+  }
+  .passage-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+  }
+  .passage-container .empty-state {
+    text-align: center;
+    color: #c4b8a5;
+    padding: 40px 0;
+    font-style: italic;
+    line-height: 1.8;
+  }
+  .passage-text {
+    line-height: 2;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    text-align: justify;
+    animation: fadeIn 0.6s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .passage-text .vocab-word {
+    color: var(--accent);
+    font-weight: bold;
+    border-bottom: 2px dashed var(--accent);
+    cursor: help;
+    position: relative;
+    transition: background 0.2s;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .passage-text .vocab-word:hover {
+    background: rgba(184, 117, 62, 0.12);
+  }
+  .passage-text .vocab-word .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3d3226;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    z-index: 10;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+  }
+  .passage-text .vocab-word:hover .tooltip {
+    display: block;
+    animation: tooltipIn 0.2s ease-out;
+  }
+  @keyframes tooltipIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* Loading spinner */
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* History */
+  .history-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: rgba(184, 117, 62, 0.04); }
+  .history-item .words {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .history-item .time {
+    font-size: 11px;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+
+  /* Word count badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 0 7px;
+  }
+
+  /* Action bar */
+  .action-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120px);
+    background: #3d3226;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 100;
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    letter-spacing: 0.5px;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .container { padding: 12px 10px 40px; }
+    .card { padding: 16px; }
+    .header h1 { font-size: 22px; }
+    .input-row { flex-direction: column; }
+    .input-row input { min-width: auto; }
+    .theme-options, .level-options { gap: 6px; }
+    .theme-chip, .level-chip { padding: 6px 12px; font-size: 12px; }
+    .passage-text { font-size: 15px; line-height: 1.9; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <span class="icon">📖</span>
+    <h1>词汇阅读生成器</h1>
+    <p class="sub">把难记的单词编成故事，读一遍就记住</p>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>输入今天记不住的单词</div>
+    <div class="input-row">
+      <input type="text" id="wordInput"
+             placeholder="输入单词，按回车添加（如：terrain torrent seismic）"
+             autocomplete="off">
+      <button class="btn btn-primary" onclick="addWords()">＋ 添加</button>
+    </div>
+    <div class="tag-list empty" id="tagList"></div>
+    <div style="margin-top:8px;font-size:12px;color:var(--text-light);">
+      已添加 <span id="wordCount" class="badge" style="vertical-align:middle;">0</span> 个单词
+      &nbsp;·&nbsp;
+      <button class="btn-danger-text" onclick="clearWords()">清空全部</button>
+    </div>
+  </div>
+
+  <!-- Theme & Level Card -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>选择风格和难度</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📚 文章主题</div>
+      <div class="theme-options" id="themeOptions">
+        <span class="theme-chip active" data-theme="nature">🌿 自然地理</span>
+        <span class="theme-chip" data-theme="daily">🏠 日常生活</span>
+        <span class="theme-chip" data-theme="science">🔬 科学探索</span>
+        <span class="theme-chip" data-theme="travel">✈️ 旅行冒险</span>
+        <span class="theme-chip" data-theme="story">🎭 寓言故事</span>
+        <span class="theme-chip" data-theme="news">📰 新闻纪实</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:8px;">📝 语言难度</div>
+      <div class="level-options" id="levelOptions">
+        <span class="level-chip" data-level="easy">⭐ 简单句</span>
+        <span class="level-chip active" data-level="medium">⭐⭐ 中等</span>
+        <span class="level-chip" data-level="hard">⭐⭐⭐ 进阶</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate Button -->
+  <div style="text-align:center;margin-bottom:16px;">
+    <button class="btn btn-primary" id="generateBtn"
+            style="font-size:17px;padding:14px 48px;letter-spacing:2px;"
+            onclick="generate()">
+      ✨ 生成阅读材料
+    </button>
+  </div>
+
+  <!-- Result Card -->
+  <div class="card" id="resultCard">
+    <div class="card-title"><span class="dot"></span>生成的阅读材料</div>
+    <div class="passage-container" id="passageContainer">
+      <div class="empty-state">
+        在上面添加单词，选择主题，<br>然后点击「生成阅读材料」
+      </div>
+    </div>
+    <div class="action-bar" id="actionBar" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="copyPassage()">📋 复制文本</button>
+      <button class="btn btn-outline btn-sm" onclick="regenerate()">🔄 换一篇</button>
+      <button class="btn btn-outline btn-sm" onclick="exportText()">💾 导出文本</button>
+      <button class="btn btn-outline btn-sm" onclick="printPassage()">🖨️ 打印</button>
+    </div>
+  </div>
+
+  <!-- History Card -->
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="card-title"><span class="dot"></span>历史记录</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== State =====
+let words = [];
+let currentTheme = 'nature';
+let currentLevel = 'medium';
+let currentPassage = '';
+let history = [];
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Load from localStorage
+  try {
+    const saved = localStorage.getItem('ielts_vocab_reader');
+    if (saved) {
+      const data = JSON.parse(saved);
+      history = data.history || [];
+      if (data.words) words = data.words;
+      renderTags();
+      renderHistory();
+    }
+  } catch(e) {}
+
+  // Word input: Enter to add
+  document.getElementById('wordInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addWords();
+    }
+  });
+
+  // Theme chips
+  document.querySelectorAll('#themeOptions .theme-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#themeOptions .theme-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentTheme = chip.dataset.theme;
+    });
+  });
+
+  // Level chips
+  document.querySelectorAll('#levelOptions .level-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#levelOptions .level-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentLevel = chip.dataset.level;
+    });
+  });
+
+  renderTags();
+  renderHistory();
+});
+
+// ===== Word Management =====
+function addWords() {
+  const input = document.getElementById('wordInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  // Split by commas, spaces, or Chinese punctuation
+  const newWords = raw
+    .split(/[,，、\s]+/)
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w.length > 0 && /[a-zA-Z]/.test(w));
+
+  let added = 0;
+  newWords.forEach(w => {
+    if (!words.includes(w)) {
+      words.push(w);
+      added++;
+    }
+  });
+
+  input.value = '';
+  input.focus();
+  renderTags();
+  saveState();
+
+  if (added > 0) {
+    showToast(`已添加 ${added} 个单词`);
+    // Animate the last added tags
+    setTimeout(() => {
+      const tags = document.querySelectorAll('.tag');
+      tags.forEach((t, i) => {
+        if (i >= words.length - added) {
+          t.style.animation = 'none';
+          t.offsetHeight;
+          t.style.animation = 'tagIn 0.3s ease-out';
+        }
+      });
+    }, 50);
+  }
+}
+
+function removeWord(index) {
+  words.splice(index, 1);
+  renderTags();
+  saveState();
+}
+
+function clearWords() {
+  if (words.length === 0) return;
+  words = [];
+  renderTags();
+  saveState();
+  showToast('已清空');
+}
+
+function renderTags() {
+  const container = document.getElementById('tagList');
+  const count = document.getElementById('wordCount');
+
+  if (words.length === 0) {
+    container.innerHTML = '';
+    container.classList.add('empty');
+  } else {
+    container.classList.remove('empty');
+    container.innerHTML = words.map((w, i) => `
+      <span class="tag">
+        ${escapeHtml(w)}
+        <button class="remove" onclick="removeWord(${i})" title="移除">×</button>
+      </span>
+    `).join('');
+  }
+  count.textContent = words.length;
+}
+
+// ===== Generation Engine =====
+function generate() {
+  if (words.length === 0) {
+    showToast('请先添加至少一个单词');
+    document.getElementById('wordInput').focus();
+    return;
+  }
+
+  const container = document.getElementById('passageContainer');
+  const actionBar = document.getElementById('actionBar');
+  const generateBtn = document.getElementById('generateBtn');
+
+  // Loading state
+  container.classList.add('loading');
+  container.innerHTML = '<div class="spinner"></div>';
+  generateBtn.disabled = true;
+  generateBtn.textContent = '正在生成...';
+
+  // Simulate a short generation delay for animation feel
+  setTimeout(() => {
+    currentPassage = generatePassage(words, currentTheme, currentLevel);
+    container.classList.remove('loading');
+    container.innerHTML = renderPassage(currentPassage, words);
+    actionBar.style.display = 'flex';
+    generateBtn.disabled = false;
+    generateBtn.textContent = '✨ 生成阅读材料';
+
+    // Save to history
+    history.unshift({
+      words: [...words],
+      theme: currentTheme,
+      level: currentLevel,
+      passage: currentPassage,
+      time: new Date().toISOString()
+    });
+    if (history.length > 20) history.length = 20; // Keep last 20
+    saveState();
+    renderHistory();
+
+    // Scroll to passage
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 600 + Math.random() * 400);
+}
+
+function regenerate() {
+  generate();
+}
+
+// ===== Story Generation Engine =====
+function generatePassage(wordList, theme, level) {
+  // Pick a template framework based on theme
+  const frameworks = getFrameworks(theme, level);
+  const framework = frameworks[Math.floor(Math.random() * frameworks.length)];
+
+  // Build the passage by filling the framework with words
+  return fillFramework(framework, wordList, level);
+}
+
+function getFrameworks(theme, level) {
+  // Each framework uses {{w}} placeholders that get filled with user words
+  // {{w1}}, {{w2}} etc are specific word slots
+  // {{w}} is any available word
+
+  const frameworks = {
+    nature: [
+      // Framework 1: Geographic expedition
+      {
+        title: 'The Changing Landscape',
+        intro: 'Our planet is full of remarkable natural features, and some of them are changing faster than we think.',
+        body: [
+          'Scientists recently studied a vast {WORD} in South America, where the {WORD} has been slowly transforming over thousands of years.',
+          'Near the {WORD}, researchers discovered traces of ancient {WORD} activity that once reshaped the entire region.',
+          'The most surprising finding was how {WORD} events can dramatically {VERB} the surface of the Earth in just a few decades.',
+          'Local communities living along the {WORD} have witnessed these changes firsthand. "The {WORD} used to be much different when I was a child," said one elder.',
+          'As the climate continues to change, experts warn that more areas will {VERB}, affecting millions of people who call these places home.',
+        ],
+        outro: 'Understanding these natural processes helps us prepare for the future and protect the environments we depend on.'
+      },
+      // Framework 2: Climate and weather
+      {
+        title: 'When Nature Shows Its Power',
+        intro: 'Weather events around the world are becoming more extreme, and scientists are working hard to understand why.',
+        body: [
+          'Last month, a powerful {WORD} swept across the coastal region, bringing heavy rain and strong winds that {VERB} the landscape.',
+          'Just weeks earlier, the same area had experienced a severe {WORD}, leaving the ground dry and cracked. The sudden shift surprised even veteran meteorologists.',
+          '"When a {WORD} follows a period of drought, the soil cannot absorb water quickly enough," explained Dr. Chen, who studies {WORD} patterns at the National Weather Center.',
+          'The combination of these extreme events caused the ground to {VERB} rapidly, creating dangerous conditions for nearby communities.',
+          'Yet in the middle of this chaos, something remarkable happened: a small {WORD} near the coast became a refuge for wildlife, demonstrating nature\'s resilience.',
+          'Scientists now believe that understanding the relationship between {WORD} and {WORD} is crucial for predicting future disasters.',
+        ],
+        outro: 'The Earth\'s systems are deeply connected. When one changes, others follow.'
+      },
+      // Framework 3: Ecosystem story
+      {
+        title: 'Life in a Hidden World',
+        intro: 'Deep in a remote valley, there exists an ecosystem that few humans have ever seen.',
+        body: [
+          'This hidden {WORD} is surrounded by towering mountains, with a small {WORD} providing the only source of water.',
+          'The {WORD} here creates a unique microclimate, allowing species that exist nowhere else on Earth to thrive.',
+          'Among the most fascinating inhabitants is a tiny creature that has adapted to survive {WORD} events by burrowing deep underground.',
+          'The {WORD} that defines this landscape was formed millions of years ago when volcanic activity {VERB} the entire region.',
+          'Today, researchers are racing to document this fragile environment before climate change causes it to {VERB}.',
+          '"Every time we visit, we find something new. The {WORD} here is simply extraordinary," said the expedition leader.',
+        ],
+        outro: 'Some places on Earth still hold secrets waiting to be discovered.'
+      },
+    ],
+
+    daily: [
+      // Framework 4: A day in the city
+      {
+        title: 'An Unusual Morning',
+        intro: 'It started as an ordinary Tuesday, but it quickly became a day I would never forget.',
+        body: [
+          'I woke up to the sound of {WORD} outside my window. At first, I thought it was just the usual city noise, but something felt different.',
+          'Walking to the subway, I noticed that the {WORD} had changed overnight. A new shop had opened where the old bookstore used to be.',
+          'At work, my colleague shared a fascinating article about {WORD}, which made me think about how much our daily lives {VERB} without us noticing.',
+          'During lunch, I decided to explore the {WORD} near the office. It was there that I witnessed something that made me reconsider everything I knew about {WORD}.',
+          'By evening, I realized that the {WORD} we experience every day is actually quite extraordinary when we stop to pay attention.',
+        ],
+        outro: 'Sometimes the most ordinary days teach us the most extraordinary lessons.'
+      },
+      // Framework 5: Learning experience
+      {
+        title: 'The Discovery',
+        intro: 'Learning something new can happen in the most unexpected ways.',
+        body: [
+          'I had been struggling to understand {WORD} for weeks. No matter how many books I read, the concept just wouldn\'t click.',
+          'Then one afternoon, while watching a documentary about {WORD}, everything suddenly made sense. The narrator explained how these two seemingly unrelated things {VERB} in ways I had never considered.',
+          'Excited by this breakthrough, I immediately started researching more about {WORD} and its connection to everyday life.',
+          'The more I learned, the more I realized that {WORD} is everywhere around us, hiding in plain sight.',
+          'Now I see the world differently. What once seemed like a difficult {WORD} has become a lens through which I understand everything else.',
+        ],
+        outro: 'The best learning happens when you least expect it.'
+      },
+    ],
+
+    science: [
+      {
+        title: 'Breakthrough in the Lab',
+        intro: 'A research team has made an unexpected discovery that could change how we understand the natural world.',
+        body: [
+          'The team had been studying {WORD} for over three years when they noticed something unusual in their data.',
+          'Under extreme conditions, the {WORD} began to behave in ways that contradicted existing theories. It would {VERB} rapidly, then return to its original state within seconds.',
+          '"We thought our instruments were broken at first," admitted the lead researcher. "A {WORD} shouldn\'t be able to do that according to everything we know."',
+          'Further analysis revealed that the {WORD} was responding to a previously unknown force, one that could potentially {VERB} entire industries if harnessed.',
+          'The discovery challenges our understanding of {WORD} and opens up new possibilities for technology that could transform daily life.',
+        ],
+        outro: 'Science advances one surprising discovery at a time.'
+      },
+    ],
+
+    travel: [
+      {
+        title: 'Journey to the Unknown',
+        intro: 'Some trips change the way you see the world. This was one of them.',
+        body: [
+          'After months of planning, I finally arrived at the {WORD} I had only seen in photographs.',
+          'The {WORD} stretched out before me, more magnificent than any picture could capture. A local guide pointed toward the {WORD} in the distance.',
+          '"That\'s where the real adventure begins," she said with a knowing smile.',
+          'As we ventured deeper into the {WORD}, I began to notice details I would have missed as a casual tourist — the way the light hit the {WORD}, the sound of wind moving through the valley.',
+          'On the third day, we encountered a {WORD} that tested our preparations. But facing that challenge taught me more about myself than any guided tour ever could.',
+        ],
+        outro: 'Travel is not about the destination. It\'s about who you become along the way.'
+      },
+    ],
+
+    story: [
+      {
+        title: 'The Wise Old Owl',
+        intro: 'In a forest not far from here, there lived a creature who understood the secret of the world.',
+        body: [
+          'The animals of the forest had a problem. The great {WORD} that had sheltered them for generations was beginning to {VERB}.',
+          'Each animal had a different theory. The rabbit blamed the {WORD}. The fox pointed to the {WORD} that had appeared last spring.',
+          'Finally, they went to the wise old owl. "Tell us," they pleaded, "why does our home {VERB}?"',
+          'The owl closed its eyes and thought about {WORD}, about {WORD}, and about all the changes she had witnessed over her long life.',
+          '"The forest is not dying," she said at last. "It is transforming. And so must you."',
+          'The animals learned that day that change, even when it seems like {WORD}, is simply part of the great cycle of life.',
+        ],
+        outro: 'Adaptation is the oldest wisdom of all.'
+      },
+    ],
+
+    news: [
+      {
+        title: 'A Development That Changes Everything',
+        intro: 'In a development that has captured global attention, experts are reevaluating long-held assumptions.',
+        body: [
+          'The recent report on {WORD} has sparked intense debate among policymakers and scientists alike.',
+          'According to the findings, the {WORD} in affected areas has already begun to {VERB} at an unprecedented rate.',
+          '"We have never seen a {WORD} of this magnitude before," stated the commission\'s chairperson during a press conference on Tuesday.',
+          'Critics argue that the response to the {WORD} has been inadequate. "If we don\'t act now, the situation will {VERB} beyond our control," warned an environmental advocate.',
+          'Meanwhile, communities near the {WORD} are already adapting. Local leaders have proposed a plan that addresses both the immediate {WORD} and long-term sustainability.',
+        ],
+        outro: 'The question is no longer whether change is coming, but how we choose to respond.'
+      },
+    ],
+  };
+
+  return frameworks[theme] || frameworks['nature'];
+}
+
+function fillFramework(framework, wordList, level) {
+  // Make working copies
+  let available = [...wordList];
+  let usedWords = new Set();
+
+  // Shuffle available words for variety
+  shuffle(available);
+
+  const getWord = () => {
+    if (available.length === 0) {
+      // Recycle words if needed
+      available = [...wordList].filter(w => !usedWords.has(w));
+      if (available.length === 0) {
+        available = [...wordList];
+        usedWords.clear();
+      }
+      shuffle(available);
+    }
+    const w = available.shift();
+    usedWords.add(w);
+    return w;
+  };
+
+  // Build vocabulary glossary
+  const allUsedWords = [];
+
+  const replacePlaceholders = (text) => {
+    return text.replace(/\{WORD\}/g, () => {
+      const w = getWord();
+      allUsedWords.push(w);
+      return `<span class="vocab-word">${escapeHtml(w)}<span class="tooltip">${getQuickHint(w)}</span></span>`;
+    }).replace(/\{VERB\}/g, () => {
+      // Verb form - pick a word and possibly adapt it
+      const w = getWord();
+      allUsedWords.push(w);
+      return `<span class="vocab-word">${escapeHtml(w)}<span class="tooltip">${getQuickHint(w)}</span></span>`;
+    }).replace(/\{ADJ\}/g, () => {
+      const w = getWord();
+      allUsedWords.push(w);
+      return `<span class="vocab-word">${escapeHtml(w)}<span class="tooltip">${getQuickHint(w)}</span></span>`;
+    });
+  };
+
+  // Build the passage
+  let html = '';
+
+  // Title
+  html += `<h3 style="font-size:20px;margin-bottom:16px;color:var(--accent);text-align:center;letter-spacing:1px;">${framework.title}</h3>`;
+
+  // Intro
+  html += `<p style="margin-bottom:12px;">${framework.intro}</p>`;
+
+  // Body paragraphs
+  framework.body.forEach(para => {
+    html += `<p style="margin-bottom:12px;text-indent:2em;">${replacePlaceholders(para)}</p>`;
+  });
+
+  // Outro
+  html += `<p style="margin-bottom:0;font-style:italic;color:var(--text-light);">${framework.outro}</p>`;
+
+  // Vocabulary list
+  if (allUsedWords.length > 0) {
+    html += `<hr style="border:none;border-top:1px dashed var(--border);margin:20px 0 12px;">`;
+    html += `<div style="font-size:14px;color:var(--text-light);">`;
+    html += `<strong>📝 本文生词：</strong> `;
+    html += [...new Set(allUsedWords)].map(w =>
+      `<span style="color:var(--accent);font-weight:bold;">${escapeHtml(w)}</span>`
+    ).join(' · ');
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+function getQuickHint(word) {
+  // Provide quick context clues for common word patterns
+  const hints = {
+    'erode': 'v. 侵蚀',
+    'deteriorate': 'v. 恶化',
+    'aggravate': 'v. 加重',
+    'degrade': 'v. 降解',
+    'terrain': 'n. 地形',
+    'torrent': 'n. 急流',
+    'tsunami': 'n. 海啸',
+    'magma': 'n. 岩浆',
+    'tornado': 'n. 龙卷风',
+    'monsoon': 'n. 季风',
+    'seismic': 'adj. 地震的',
+    'plain': 'n. 平原',
+    'plateau': 'n. 高原',
+    'oasis': 'n. 绿洲',
+    'globe': 'n. 地球',
+    'hemisphere': 'n. 半球',
+    'axis': 'n. 轴',
+    'equator': 'n. 赤道',
+    'coast': 'n. 海岸',
+    'gulf': 'n. 海湾',
+    'navigation': 'n. 导航',
+  };
+  return hints[word.toLowerCase()] || '点击查看释义';
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+// ===== Render =====
+function renderPassage(passageHtml, wordList) {
+  return `<div class="passage-text">${passageHtml}</div>`;
+}
+
+// ===== Actions =====
+function copyPassage() {
+  // Strip HTML tags for plain text copy
+  const tmp = document.createElement('div');
+  tmp.innerHTML = currentPassage;
+  const text = tmp.textContent || tmp.innerText;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ 已复制到剪贴板');
+  }).catch(() => {
+    showToast('复制失败，请手动选中文本');
+  });
+}
+
+function exportText() {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = currentPassage;
+  const text = tmp.textContent || tmp.innerText;
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const now = new Date();
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.download = `阅读材料_${ts}_${words.slice(0,3).join('_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 已导出文本文件');
+}
+
+function printPassage() {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = currentPassage;
+  const text = tmp.textContent || tmp.innerText;
+
+  const printWindow = window.open('', '_blank', 'width=700,height=600');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><title>词汇阅读材料</title>
+    <style>
+      body { font-family: Georgia, serif; line-height: 2; max-width: 650px; margin: 40px auto; padding: 20px; color: #333; }
+      h3 { text-align: center; color: #8b5e3c; }
+      .vocab-word { color: #b8753e; font-weight: bold; text-decoration: underline; text-decoration-style: dashed; }
+    </style></head>
+    <body>${currentPassage}</body></html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 300);
+}
+
+// ===== History =====
+function renderHistory() {
+  const card = document.getElementById('historyCard');
+  const list = document.getElementById('historyList');
+
+  if (history.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  list.innerHTML = history.slice(0, 10).map((item, i) => {
+    const time = new Date(item.time);
+    const timeStr = `${time.getMonth()+1}/${time.getDate()} ${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}`;
+    const wordsStr = item.words.slice(0, 6).join(', ') + (item.words.length > 6 ? ` 等${item.words.length}个` : '');
+    const themeNames = { nature: '🌿', daily: '🏠', science: '🔬', travel: '✈️', story: '🎭', news: '📰' };
+    return `
+      <div class="history-item" onclick="loadHistory(${i})" title="点击加载这些单词">
+        <span>${themeNames[item.theme] || ''}</span>
+        <span class="words">${escapeHtml(wordsStr)}</span>
+        <span class="time">${timeStr}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadHistory(index) {
+  const item = history[index];
+  if (!item) return;
+  words = [...item.words];
+  currentTheme = item.theme;
+  currentLevel = item.level;
+
+  // Update UI
+  document.querySelectorAll('#themeOptions .theme-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.theme === currentTheme);
+  });
+  document.querySelectorAll('#levelOptions .level-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.level === currentLevel);
+  });
+
+  renderTags();
+  saveState();
+
+  // Display the saved passage
+  currentPassage = item.passage;
+  const container = document.getElementById('passageContainer');
+  container.classList.remove('loading');
+  container.innerHTML = renderPassage(currentPassage, words);
+  document.getElementById('actionBar').style.display = 'flex';
+
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('已加载历史记录');
+}
+
+// ===== Helpers =====
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('ielts_vocab_reader', JSON.stringify({
+      words: words,
+      history: history,
+    }));
+  } catch(e) {}
+}
+
+// ===== Keyboard shortcut =====
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    generate();
+  }
+});
+</script>
+
+</body>
+</html>
