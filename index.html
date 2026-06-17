@@ -1,1 +1,227 @@
-<h1>test</h1>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#eef7f2">
+  <title>IELTS 75 · 雅思学习中心</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="desk">
+    <header class="notebook-header">
+      <div class="title-lockup">
+        <span class="book-icon">📚</span>
+        <div>
+          <span class="header-en">IELTS STUDY CENTER</span>
+          <h1>雅思学习中心</h1>
+          <div class="exam-countdown" style="margin-top:4px">
+            <span class="ec-label">挑战</span>
+            <span class="ec-num" id="countdownDays">72</span>
+            <span class="ec-suffix">天后结束</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div><small>TODAY</small><strong id="todayDate">2026.06.06</strong></div>
+        <div><small>EXAM</small><strong>2026.08.17</strong></div>
+        <span id="liveClock">--:--</span>
+      </div>
+    </header>
+
+    <div class="notebook">
+      <div class="binding" aria-hidden="true"></div>
+      <nav class="page-tabs" aria-label="笔记本分页">
+        <button class="page-tab active" data-page="today">✦ 今日页</button>
+        <button class="page-tab" data-page="roadmap">◈ 路线页</button>
+        <button class="page-tab" data-page="scores">◉ 成绩页</button>
+      </nav>
+
+      <!-- ═══════════════ 今日页 ═══════════════ -->
+      <section class="paper-page active" id="page-today">
+        <div class="page-heading">
+          <div>
+            <span class="hand-label" id="heroPhase">PHASE 1 · 补基础 + 补诊断</span>
+            <h2>Day <b id="heroDay">03</b> · 今日计划</h2>
+            <p>先修听力。完成任务后填写下方复盘，数据驱动明天。</p>
+          </div>
+          <div class="heading-right">
+            <div class="date-stamp"><span>今日完成</span><strong><b id="todayPercent">0</b>%</strong></div>
+          </div>
+        </div>
+
+        <!-- 顶部工具条：计时器 + 考核 + 状态 -->
+        <div class="toolbar-row">
+          <article class="focus-note">
+            <div class="note-heading"><span>FOCUS SESSION</span><b id="timerState">准备开始</b></div>
+            <div class="current-task-strip">
+              <strong id="currentTaskLabel">现在 · 休息 / 自由安排</strong>
+              <small id="nextTaskLabel">下一项 13:30 · 慢速听力</small>
+            </div>
+            <select id="timerTaskSelect" aria-label="选择计时任务"></select>
+            <div class="timer-display" id="timerDisplay">20:00</div>
+            <div class="timer-controls">
+              <button class="ink-button" id="timerStart">开始</button>
+              <button class="outline-button" id="timerPause">暂停</button>
+              <button class="plain-button" id="timerReset">重置</button>
+            </div>
+            <label class="duration-row">计时分钟<input id="timerMinutes" type="number" min="1" max="180" value="20"></label>
+          </article>
+
+          <article class="sticky-note">
+            <span>NEXT CHECK</span>
+            <div id="nextCheckpoint"></div>
+            <div class="feedback-row" id="feedbackRow">
+              <button type="button" class="feedback-btn" data-feedback="pass"><span class="feedback-emoji">⭐</span>达标</button>
+              <button type="button" class="feedback-btn" data-feedback="fail"><span class="feedback-emoji">💪</span>再战</button>
+              <button type="button" class="feedback-btn" data-feedback="skip"><span class="feedback-emoji">😴</span>休息</button>
+            </div>
+          </article>
+
+          <article class="mini-log">
+            <div class="mini-log-head"><span>当前分数 → 目标</span></div>
+            <div id="scoreStrip"></div>
+          </article>
+        </div>
+
+        <!-- 任务清单 -->
+        <article class="planner-sheet">
+          <div class="sheet-title">
+            <div><h3>今日任务清单</h3></div>
+            <strong id="checkinCount">0 / 12</strong>
+          </div>
+          <div class="progress-line"><i id="todayProgressBar"></i></div>
+          <div class="lined-task-list" id="checkinList"></div>
+        </article>
+
+        <!-- 复盘区 -->
+        <article class="review-section">
+          <div class="section-divider review-divider">
+            <span>今日复盘 · DAILY REFLECTION</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="ink-button" id="saveReviewBtn" type="submit" form="reviewForm" style="font-size:12px;padding:7px 14px">保存复盘</button>
+              <button class="text-button" id="openReviewHistory" type="button">📋 历史复盘 →</button>
+            </div>
+          </div>
+          <form id="reviewForm">
+            <div class="review-grid">
+              <label><span>01 · Listening</span><textarea id="reviewListening" rows="3" placeholder="材料、正确率、错因"></textarea></label>
+              <label><span>02 · Reading</span><textarea id="reviewReading" rows="3" placeholder="材料、正确率、题型、同义替换"></textarea></label>
+              <label><span>03 · Writing / Speaking</span><textarea id="reviewOutput" rows="3" placeholder="今日产出与最大问题"></textarea></label>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <!-- ═══════════════ 路线页 ═══════════════ -->
+      <section class="paper-page" id="page-roadmap">
+        <div class="page-heading">
+          <div><span class="hand-label">75-DAY ROADMAP</span><h2>阶段路线与考核日</h2><p>不展示每日卡片，只保留阶段重点与必须达标的检查点。</p></div>
+          <div class="heading-right">
+            <div class="date-stamp"><span>目标</span><strong>6.0</strong></div>
+          </div>
+        </div>
+
+        <!-- 进度回顾区（放在阶段路线上面） -->
+        <div class="section-divider progress-divider"><span>每日完成率回顾 · DAILY PROGRESS</span></div>
+        <section class="progress-review">
+          <div class="progress-overview">
+            <div id="progressHero"></div>
+            <div class="progress-summary" id="progressSummary"></div>
+          </div>
+          <div class="progress-board">
+            <article class="progress-trend-card">
+              <div class="progress-card-heading">
+                <div><strong>近 7 日完成情况</strong><small>每日完成任务占比</small></div>
+                <span><i></i>80% 达标线</span>
+              </div>
+              <div class="daily-progress-chart" id="dailyProgressChart"></div>
+            </article>
+            <article class="progress-log-card">
+              <div class="progress-card-heading">
+                <div><strong>逐日学习记录</strong><small>最近完成情况</small></div>
+              </div>
+              <div class="daily-progress-log" id="dailyProgressLog"></div>
+            </article>
+          </div>
+        </section>
+
+        <div class="section-divider"><span>考核节点 · CHECKPOINTS</span></div>
+        <div class="chapter-list" id="phaseTrack"></div>
+        <div class="timeline" id="checkpointTrack"></div>
+      </section>
+
+      <!-- ═══════════════ 成绩页 ═══════════════ -->
+      <section class="paper-page" id="page-scores">
+        <div class="page-heading">
+          <div><span class="hand-label">SCORE BOOK</span><h2>成绩记录与评分标准</h2><p>输入正确数自动换算 Band；写作口语直接填 Band。</p></div>
+        </div>
+
+        <div class="scorebook-grid">
+          <article class="score-entry">
+            <h3>记录一次模考</h3>
+            <form id="scoreForm">
+              <label>日期<input type="date" id="scoreDate" required></label>
+              <div class="form-row">
+                <label>Listening / 40<input type="number" id="listeningCorrect" min="0" max="40" placeholder="23"></label>
+                <label>Reading / 40<input type="number" id="readingCorrect" min="0" max="40" placeholder="27"></label>
+              </div>
+              <div class="form-row">
+                <label>Writing Band<input type="number" id="writingBand" min="0" max="9" step="0.5" placeholder="5.5"></label>
+                <label>Speaking Band<input type="number" id="speakingBand" min="0" max="9" step="0.5" placeholder="5.5"></label>
+              </div>
+              <label>备注<textarea id="scoreNote" rows="2" maxlength="200" placeholder="主要错因、状态、下次重点"></textarea></label>
+              <button class="ink-button" type="submit">保存成绩</button>
+            </form>
+            <div class="score-history" id="scoreHistory"></div>
+          </article>
+
+          <article class="standards-book">
+            <h3>雅思四科评分速查</h3>
+            <details open>
+              <summary>Listening · 答对数换算</summary>
+              <div class="conversion-grid">
+                <b>39–40<i>9.0</i></b><b>37–38<i>8.5</i></b><b>35–36<i>8.0</i></b>
+                <b>32–34<i>7.5</i></b><b>30–31<i>7.0</i></b><b>26–29<i>6.5</i></b>
+                <b class="target">23–25<i>6.0</i></b><b>18–22<i>5.5</i></b><b>16–17<i>5.0</i></b>
+              </div>
+            </details>
+            <details>
+              <summary>Academic Reading · 答对数换算</summary>
+              <div class="conversion-grid">
+                <b>39–40<i>9.0</i></b><b>37–38<i>8.5</i></b><b>35–36<i>8.0</i></b>
+                <b>33–34<i>7.5</i></b><b>30–32<i>7.0</i></b><b class="target">27–29<i>6.5</i></b>
+                <b>23–26<i>6.0</i></b><b>19–22<i>5.5</i></b><b>15–18<i>5.0</i></b>
+              </div>
+            </details>
+            <details>
+              <summary>Writing · 四项评分维度</summary>
+              <ul><li>Task Achievement / Response</li><li>Coherence & Cohesion</li><li>Lexical Resource</li><li>Grammar Range & Accuracy</li></ul>
+              <p>Task 2 权重约为 Task 1 的两倍。当前目标：5.5。</p>
+            </details>
+            <details>
+              <summary>Speaking · 四项评分维度</summary>
+              <ul><li>Fluency & Coherence</li><li>Lexical Resource</li><li>Grammar Range & Accuracy</li><li>Pronunciation</li></ul>
+              <p>四项等权评分。当前目标：5.5。</p>
+            </details>
+            <div class="callout"><b>Overall 规则</b><span>四科平均后取最近的 0.5；尾数 .25 和 .75 向上取整。</span></div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 历史复盘弹窗 -->
+  <div class="modal-overlay" id="reviewHistoryModal" hidden>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h3>📋 历史复盘记录</h3>
+        <button class="plain-button" id="closeReviewHistory">✕ 关闭</button>
+      </div>
+      <div id="reviewHistory" class="review-history"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
